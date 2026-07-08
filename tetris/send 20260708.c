@@ -1,14 +1,3 @@
-//#include<stdio.h>
-//
-//void main()
-//{
-//	printf("Hello, World!\n");
-//
-//	printf("haha!\n");
-//}
-
-
-
 #include<stdio.h>
 #include<string.h>
 #include<malloc.h>
@@ -106,20 +95,45 @@ unsigned short checksum(unsigned short* buff, int len_16)
 
 //===========================================================
 
-uint8_t dst_mac[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Destination MAC Address : FF:FF:FF:FF:FF:FF
-uint8_t src_mac[6] = { 0xE4, 0xFD, 0x45, 0x4A, 0x51, 0xC8 };
-uint16_t type_arp_ip = 0X0806;
-uint16_t hardware_type = 0x0001;
-uint16_t protocol_type = 0x0800;
-uint8_t hardware_length = 6;
-uint8_t protocol_length = 4;
-uint16_t arp_op_code = 1; // 1: request, 2: reply
-uint8_t send_mac[6] = { 0x00, 0xFD, 0x45, 0x4A, 0x51, 0xC8 };
-uint8_t send_ip[4] = { 172, 30, 1, 30 };
-uint8_t target_mac[6] = { 0xE4, 0xFD, 0x45, 0x4A, 0x0A, 0x88 };
-uint8_t target_ip[4] = { 172, 30, 1, 7 };
+// uint8_t dst_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Destination MAC Address : FF:FF:FF:FF:FF:FF
+// uint8_t src_mac[6] = {0xE4, 0xFD, 0x45, 0x4A, 0x51, 0xC8};
+// uint16_t type_arp_ip = 0X0800;
+// uint16_t hardware_type = 0x0001;
+// uint16_t protocol_type = 0x0800;
+// uint8_t hardware_length = 6;
+// uint8_t protocol_length = 4;
+// uint16_t arp_op_code = 1; // 1: request, 2: reply
+// uint8_t send_mac[6] = {0x00, 0xFD, 0x45, 0x4A, 0x51, 0xC8};
+// uint8_t send_ip[4] = {172, 30, 1, 30};
+// uint8_t target_mac[6] = {0xE4, 0xFD, 0x45, 0x4A, 0x0A, 0x88};
+// uint8_t target_ip[4] = {172, 30, 1, 7};
+enum {
+	PROTOCOL_NUM_TCP = 6,
+	PROTOCOL_NUM_UDP = 17
+};
 
 
+// IP HEAD
+uint8_t dst_mac[6] = { 0x45, 0xFD, 0x45, 0x4A, 0x51, 0xC8 }; // Destination MAC Address : FF:FF:FF:FF:FF:FF
+uint8_t src_mac[6] = { 0x00, 0x0C, 0x29, 0x45, 0x48, 0x45 };
+uint16_t type_arp_ip = 0X0800;
+uint8_t ip_version_head_length = 0x45;
+uint8_t tos = 0x00;
+uint16_t ip_total_length = 46 - 14;
+uint16_t ip_id = 0x00;
+uint16_t ip_floag_fragment_offset = 0x00;
+uint8_t ip_ttl = 128;
+uint8_t ip_protocol = PROTOCOL_NUM_UDP; // 6 : TCP, 17 : UDP
+uint8_t source_ip[4] = { 172, 30, 1, 64 };
+uint8_t destination_ip[4] = { 172, 30, 1, 30 };
+
+// UDP head	
+uint16_t udp_src_port = 3000;
+uint16_t udp_dst_port = 3000;
+uint16_t udp_length = 8; // UDP header length + data length
+uint16_t udp_checksum = 0;
+uint16_t udp_total_length = 46 - 14 - 20; // Total length of UDP header and data (46 bytes total - 14 bytes Ethernet header - 20 bytes IP header)
+uint8_t udp_data[4] = { 'h', 'a', 'h', 'a' }; // Example data to send in UDP packet
 
 
 // void buff_init()
@@ -222,61 +236,77 @@ uint8_t target_ip[4] = { 172, 30, 1, 7 };
 void buff_init()
 {
 
+	//Ethernet head
+	for (int i = 0; i < 6; i++)
+	{
 
-	//Ethernet
-	//Destination MAC Address : 00:01:02:03:04:05
-	sendbuff[0] = 0xE4;
-	sendbuff[1] = 0xFD;
-	sendbuff[2] = 0x45;
-	sendbuff[3] = 0x4A;
-	sendbuff[4] = 0x51;
-	sendbuff[5] = 0xC8;
-	// // Source MAC Address : 00:0c:29:92:6a:6c	
-	// // My Mac Address(linux) : 00:0c:29:45:48:45
-	sendbuff[6] = 0x00;
-	sendbuff[7] = 0x0C;
-	sendbuff[8] = 0x29;
-	sendbuff[9] = 0x45;
-	sendbuff[10] = 0x48;
-	sendbuff[11] = 0x45;
+		sendbuff[i] = dst_mac[i];
+		sendbuff[i + 6] = src_mac[i];
+
+
+	}
+
+
+	// //Ethernet
+	// //Destination MAC Address : 00:01:02:03:04:05
+	// sendbuff[0] = 0xE4;
+	// sendbuff[1] = 0xFD;
+	// sendbuff[2] = 0x45;
+	// sendbuff[3] = 0x4A;
+	// sendbuff[4] = 0x51;
+	// sendbuff[5] = 0xC8;
+	// // // Source MAC Address : 00:0c:29:92:6a:6c	
+	// // // My Mac Address(linux) : 00:0c:29:45:48:45
+	// sendbuff[6] = 0x00;
+	// sendbuff[7] = 0x0C;
+	// sendbuff[8] = 0x29;
+	// sendbuff[9] = 0x45;
+	// sendbuff[10] = 0x48;
+	// sendbuff[11] = 0x45;
 
 	// // Type = ARP : 0x0806, IP : 0x0800
-	sendbuff[12] = 0x08;
-	sendbuff[13] = 0x00;
+	sendbuff[12] = (type_arp_ip >> 8) & 0xff;
+	sendbuff[13] = type_arp_ip & 0xff;
 
-
+	// ============================= IP head 
 	sendbuff[14] = 0x45; // Version(4) + Header Length(5)
 	// TOS
-	sendbuff[15] = 0x00; // Type of Service
+	sendbuff[15] = tos; // Type of Service
 	// Total Length
-	sendbuff[16] = 0;
-	sendbuff[17] = 46;
+	sendbuff[16] = (ip_total_length & 0xff00) >> 8;
+	sendbuff[17] = ip_total_length & 0x00ff;
 	//ID
-	sendbuff[18] = 0;
-	sendbuff[19] = 0;
+	sendbuff[18] = (ip_id & 0xff00) >> 8;
+	sendbuff[19] = ip_id & 0x00ff;
 	// Flag . Fragment Offset
-	sendbuff[20] = 0;
-	sendbuff[21] = 0;
+	sendbuff[20] = (ip_floag_fragment_offset >> 8) & 0xff;
+	sendbuff[21] = ip_floag_fragment_offset & 0x00ff;
 	// TTL
-	sendbuff[22] = 128;
+	sendbuff[22] = ip_ttl;
 	// Protocol
-	sendbuff[23] = 17; // 6 : TCP, 17 : UDP
+	sendbuff[23] = ip_protocol; // 6 : TCP, 17 : UDP
 
 	//checksum
 
 	sendbuff[24] == 0;
 	sendbuff[25] == 0;
 
-	// source IP (Linux)
-	sendbuff[26] = 172;
-	sendbuff[27] = 30;
-	sendbuff[28] = 1;
-	sendbuff[29] = 64;
-	// Destination IP (Windows) 
-	sendbuff[30] = 172;
-	sendbuff[31] = 30;
-	sendbuff[32] = 1;
-	sendbuff[33] = 30;
+
+	for (int i = 0; i < 4; i++)
+	{
+		sendbuff[i + 26] = source_ip[i]; // source ip : Linux
+		sendbuff[i + 30] = destination_ip[i]; // Destination ip : Windows
+	}
+	// // source IP (Linux) 
+	// sendbuff[26] = 172;
+	// sendbuff[27] = 30;
+	// sendbuff[28] = 1;
+	// sendbuff[29] = 64;
+	// // Destination IP (Windows) 
+	// sendbuff[30] = 172;
+	// sendbuff[31] = 30;
+	// sendbuff[32] = 1;
+	// sendbuff[33] = 30;
 
 
 	unsigned short header_checksum = checksum((unsigned short*)(&sendbuff[14]), 20 / 2);  // 20 bytes
@@ -284,28 +314,34 @@ void buff_init()
 	sendbuff[25] = header_checksum & 0xff;
 
 
-	//UDP
+	//=====================UDP haed
 	//source port
-	sendbuff[34] = (3000 >> 8) & 0xff; // (0x0000 >> 8) & 0xff
-	sendbuff[35] = 3000 & 0xff;
+	sendbuff[34] = (udp_src_port >> 8) & 0xff; // (0x0000 >> 8) & 0xff
+	sendbuff[35] = udp_src_port & 0xff;
 	//destination port
-	sendbuff[36] = (3000 >> 8) & 0xff;
-	sendbuff[37] = 3000 & 0xff;
+	sendbuff[36] = (udp_dst_port >> 8) & 0xff;
+	sendbuff[37] = udp_dst_port & 0xff;
 	// totoal length
-	sendbuff[38] = 0;
-	sendbuff[39] = 46 - 14 - 20;
+	sendbuff[38] = udp_total_length >> 8 & 0xff;
+	sendbuff[39] = udp_total_length & 0xff;
 	// checksum
 	 //sendbuff[40] = 0;
 	 //sendbuff[41] = 0;
 
 
-	sendbuff[40] = 0;
-	sendbuff[41] = 0;
+	sendbuff[40] = (udp_checksum >> 8) & 0xff;
+	sendbuff[41] = udp_checksum & 0xff;
 
-	sendbuff[42] = 'h';
-	sendbuff[43] = 'a';
-	sendbuff[44] = 'h';
-	sendbuff[45] = 'a';
+
+	for (int i = 0; i < 4; i++)
+	{
+		sendbuff[i + 42] = udp_data[i]; // Example data to send in UDP packet
+	}
+
+	// sendbuff[42] = 'h';
+	// sendbuff[43] = 'a';
+	// sendbuff[44] = 'h';
+	// sendbuff[45] = 'a';
 
 	buff_len = 46;
 
@@ -334,7 +370,5 @@ void send_data_process()
 
 		printf("count = %d\n", count++);
 		usleep(1000000);
-
-
 	}
 }
