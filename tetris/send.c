@@ -334,5 +334,7 @@ void send_data_process()
 
 		printf("count = %d\n", count++);
 		usleep(1000000);
+
+
 	}
 }
